@@ -58,6 +58,45 @@ union {
 }
 ```
 
+A use-case for `Enumerated_Array` that many may find useful is for defining a constant “table” of constant data that is indexed into with an `enum`:
+```jai
+Powerup_Kind :: enum {
+    DOUBLE_DAMAGE;
+    HASTE;
+    INVISIBILITY;
+}
+Powerup_Definition :: struct {
+    name: string;
+    color: RGB;
+    on_collect: (*Hero);
+}
+POWERUP_DEFINITIONS :: Enumerated_Array(Powerup_Kind, Powerup_Definition).{values=.{
+
+    DOUBLE_DAMAGE=.{ name="Double Damage",
+        color=.{0,0,1},
+        on_collect=(using hero: *Hero) {
+            stats.damage *= 2;
+        }
+    },
+
+    HASTE=.{ name="Haste",
+        color=.{1,0,0},
+        on_collect=(using hero: *Hero) {
+            stats.move_speed = MOVE_SPEED_MAX;
+        }
+    },
+
+    INVISIBILITY=.{ name="Invisibility",
+        color=.{1,1,0},
+        on_collect=(using hero: *Hero) {
+            is_invisible = true;
+        }
+    },
+
+}};
+```
+In some other languages, one may be tempted to reach for some kind of hash table for this sort of lookup, even though it's a table of constant data. Here, though, `Enumerated_Array` is a natural fit for just such a situation.
+
 For more information, see the comments in [the module itself](module.jai).
 
 For an example use of the module, see [the “skill tree” example](examples/skill_tree.jai).
