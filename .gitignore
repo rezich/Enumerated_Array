@@ -1,0 +1,16 @@
+**/.build
+*.exe
+*.pdb
+*.dot
+*.exp
+*.db
+*.db-shm
+*.db-wal
+*.dll
+!lib/**/*.dll
+*.lib
+!lib/**/*.lib
+.vs
+*.rdbg
+**/bin
+*.rdi
