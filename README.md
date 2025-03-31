@@ -44,8 +44,8 @@ The contents of an `Enumerated_Array` using this `enum`, e.g. `Enumerated_Array(
 ```jai
 count :: 8;
 union {
-    data:     [8] int;
-    values:   struct {
+    data:           [8] int;
+    using values:   struct {
         /* 0 */ union { ZERO, FIRST, FIRST_AGAIN: int; }
         /* 1 */ TWO:   int;
         /* 2 */ THREE: int;

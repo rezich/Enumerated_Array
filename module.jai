@@ -53,8 +53,8 @@
     // The interface you will use to interact with stuff will look like this:
     //     count :: 8;
     //     union {
-    //         data:     [8] int;
-    //         values:   struct {
+    //         data:           [8] int;
+    //         using values:   struct {
     //             /* 0 */ union { ZERO, FIRST, FIRST_AGAIN: int; }
     //             /* 1 */ TWO:   int;
     //             /* 2 */ THREE: int;
@@ -138,6 +138,8 @@ Enumerated_Array :: struct(
     return true;
 } {
     // Main interface:
+    //     count:  Constant integer representing the number of elements in data.
+    //             This is the same as the number of unique values in ENUM.
     //      data:  Fixed-size array of T, sized to fit all unique ENUM values.
     //   (values:) Anonymous struct containing T members and/or unions
     //             containing only T members -- one member corresponding with
@@ -147,8 +149,11 @@ Enumerated_Array :: struct(
     //             with "values." -- though, this is useful for declaring
     //             literals of this Enumerated_Array, when you only want to set
     //             specific values (e.g. .{ FIRST=1, SEVENTH=7 }).
-    //     count:  Constant integer representing the number of elements in data.
-    //             This is the same as the number of unique values in ENUM.
+
+    // Common array convention: "count"
+    #if IS_CONTIGUOUS
+        then count :: #run type_info(ENUM).values.count;
+        else count :: VALUE_MAPPINGS.count;
 
     union {
         // Common array convention: "data"
@@ -172,11 +177,6 @@ Enumerated_Array :: struct(
             return builder_to_string(*builder);
         }}
     }
-
-    // Common array convention: "count"
-    #if IS_CONTIGUOUS
-        then count :: #run type_info(ENUM).values.count;
-        else count :: VALUE_MAPPINGS.count;
 
 
     // Internal interface:
