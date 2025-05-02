@@ -160,7 +160,7 @@ Enumerated_Array :: struct(
         data: [count] T;
 
         // Alternate way to access data: a member for each ENUM value
-        using values: struct { #insert -> string { builder: String_Builder;
+        #if count then using values: struct { #insert -> string { builder: String_Builder;
             #if IS_CONTIGUOUS {
                 for type_info(ENUM).names print(*builder, "%1%2",
                     it, ifx it_index < count-1 then ", "
@@ -206,7 +206,10 @@ Enumerated_Array :: struct(
         for 0..values.count-2 if values[it+1] != values[it]+1 then return false;
         return true;
     }
-    INDEX_OFFSET :: #run type_info(ENUM).values[0];
+    INDEX_OFFSET :: #run -> s64 {
+        using _ := type_info(ENUM);
+        return ifx count then values[0];
+    }
 
     #if !IS_CONTIGUOUS {
         Value_Mapping :: struct {
