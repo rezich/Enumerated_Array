@@ -201,12 +201,15 @@ Enumerated_Array :: struct(
     //                   it is by default). May become very large for incredibly
     //                   spare ENUMs. Used at runtime.
 
-    IS_CONTIGUOUS, INDEX_OFFSET :: #run -> bool, s64 {
+    IS_CONTIGUOUS :: #run -> bool {
+        values := type_info(ENUM).values;
+        for 0..values.count-2 if values[it+1] != values[it]+1 then return false;
+        return true;
+    }
+    INDEX_OFFSET :: #run -> s64 {
         using _ := type_info(ENUM);
-        index_offset := ifx count then values[0];
-        for 0..values.count-2 if values[it+1] != values[it]+1 then return false, index_offset;
-        return true, index_offset;
-    };
+        return ifx count then values[0];
+    }
 
     #if !IS_CONTIGUOUS {
         Value_Mapping :: struct {
