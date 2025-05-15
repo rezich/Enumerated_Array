@@ -28,7 +28,7 @@ Skill_Definition :: struct {
 
 #if SKILL_LEVELS_CAN_HAVE_DIFFERENT_COSTS {
 
-SKILL_DEFINITIONS :: Enumerated_Array(Skill_Kind, Skill_Definition).{values=.{
+SKILL_DEFINITIONS :: Enumerated_Array(Skill_Kind, Skill_Definition).{
     TRIGGER_FINGER=.{ name="Trigger Finger",
         description="Shoot 10\% faster per level.",
         levels=.[
@@ -51,11 +51,11 @@ SKILL_DEFINITIONS :: Enumerated_Array(Skill_Kind, Skill_Definition).{values=.{
             damage_multiplier += .1;
         }
     }
-}};
+};
 
 } else {
 
-SKILL_DEFINITIONS :: Enumerated_Array(Skill_Kind, Skill_Definition).{values=.{
+SKILL_DEFINITIONS :: Enumerated_Array(Skill_Kind, Skill_Definition).{
     TRIGGER_FINGER=.{ name="Trigger Finger",
         description="Shoot 10\% faster per level.",
         levels=3,
@@ -74,7 +74,7 @@ SKILL_DEFINITIONS :: Enumerated_Array(Skill_Kind, Skill_Definition).{values=.{
             damage_multiplier += .1;
         }
     }
-}};
+};
 
 }
 

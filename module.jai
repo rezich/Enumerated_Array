@@ -52,19 +52,19 @@
     stuff: Enumerated_Array(Thing, int);
     // The interface you will use to interact with stuff will look like this:
     //     count :: 8;
-    //     union {
-    //         data:           [8] int;
-    //         using values:   struct {
-    //             /* 0 */ union { ZERO, FIRST, FIRST_AGAIN: int; }
-    //             /* 1 */ TWO:   int;
-    //             /* 2 */ THREE: int;
-    //             /* 3 */ SIX:   int;
-    //             /* 4 */ SEVEN: int;
-    //             /* 5 */ EIGHT: int;
-    //             /* 6 */ NINE:  int;
-    //             /* 7 */ union { SPECIAL, LAST: int; }
-    //         }
+    //         
+    //     using values: struct {
+    //         /* 0 */ union { ZERO, FIRST, FIRST_AGAIN: int; }
+    //         /* 1 */ TWO:   int;
+    //         /* 2 */ THREE: int;
+    //         /* 3 */ SIX:   int;
+    //         /* 4 */ SEVEN: int;
+    //         /* 5 */ EIGHT: int;
+    //         /* 6 */ NINE:  int;
+    //         /* 7 */ union { SPECIAL, LAST: int; }
     //     }
+    //     #place values;
+    //     data: [8] int;
 
     // Assignment inside of a for-loop
     for * stuff it.*                            = 1;
@@ -95,12 +95,12 @@
     assert(stuff.data[0] == 108);
 
     // Assignment using a values literal
-    other_stuff := Enumerated_Array(Thing, float).{values=.{
+    other_stuff := Enumerated_Array(Thing, float).{
         FIRST  =.1,
         TWO    =.2,
         SEVEN  =.7,
         SPECIAL=.420,
-    }};
+    };
 
     // Assignment using an data literal
     more_stuff := Enumerated_Array(Thing, string).{data=.[
@@ -108,11 +108,16 @@
     ]};
 
     // Offset test
-    even_more_stuff := Enumerated_Array(enum { FOO :: 47; BAR :: 48; }, int).{values=.{
+    even_more_stuff := Enumerated_Array(enum { FOO :: 47; BAR :: 48; }, int).{
         FOO=100,
         BAR=10000
-    }};
+    };
     for even_more_stuff {}
+
+    // Empty enum test
+    Empty :: enum {}
+    nothing: Enumerated_Array(Empty, int);
+    for nothing {}
 }
 
 
@@ -155,28 +160,27 @@ Enumerated_Array :: struct(
         then count :: #run type_info(ENUM).values.count;
         else count :: VALUE_MAPPINGS.count;
 
-    union {
-        // Common array convention: "data"
-        data: [count] T;
+    // Alternate way to access data: a member for each ENUM value
+    #if count then using values: struct { #insert -> string { builder: String_Builder;
+        #if IS_CONTIGUOUS {
+            for type_info(ENUM).names print(*builder, "%1%2",
+                it, ifx it_index < count-1 then ", "
+            );
+            append(*builder, ": T;\n");
+        } else for mapping: VALUE_MAPPINGS {
+            if mapping.names.count > 1 then append(*builder,  "union {\n");
+            for mapping.names print(*builder, "%1%2",
+                it, ifx it_index < mapping.names.count-1 then ", "
+            );
+            append(*builder, ": T;\n");
+            if mapping.names.count > 1 then append(*builder,  "}\n");
+        }
+        return builder_to_string(*builder);
+    }}
 
-        // Alternate way to access data: a member for each ENUM value
-        #if count then using values: struct { #insert -> string { builder: String_Builder;
-            #if IS_CONTIGUOUS {
-                for type_info(ENUM).names print(*builder, "%1%2",
-                    it, ifx it_index < count-1 then ", "
-                );
-                append(*builder, ": T;\n");
-            } else for mapping: VALUE_MAPPINGS {
-                if mapping.names.count > 1 then append(*builder,  "union {\n");
-                for mapping.names print(*builder, "%1%2",
-                    it, ifx it_index < mapping.names.count-1 then ", "
-                );
-                append(*builder, ": T;\n");
-                if mapping.names.count > 1 then append(*builder,  "}\n");
-            }
-            return builder_to_string(*builder);
-        }}
-    }
+    // Common array convention: "data"
+    #if count then #place values;
+    data: [count] T;
 
 
     // Internal interface:
