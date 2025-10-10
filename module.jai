@@ -217,15 +217,17 @@ Enumerated_Array :: struct(
 
     #if !IS_CONTIGUOUS {
         Value_Mapping :: struct {
-            value: #run,stallable -> Type {
+            VALUE_TYPE :: #run,stallable -> Type {
                 return (cast(*Type) *(cast(*Type_Info) type_info(ENUM).internal_type)).*;
             };
+            value: VALUE_TYPE;
             names: [] string;
         }
         VALUE_MAPPINGS :: #run,stallable -> [] Value_Mapping {
             mappings: [..] Value_Mapping;
             names, values := type_info(ENUM).names, type_info(ENUM).values;
-            for value: values {
+            for values {
+                value := cast(Value_Mapping.VALUE_TYPE) it;
                 mapping_exists := false;
                 for mapping: mappings if mapping.value == value { mapping_exists = true; break; }
                 if mapping_exists then continue;
