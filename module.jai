@@ -1,6 +1,4 @@
-// @NOTE: This module has NOT been extensively tested, and there MAY be bugs.
-// @TODO: Add optional `..[] E` parameter to define ranges of values outside of
-//        the ones defined by the enum to include in the array... *maybe?*
+// @NOTE: This module has NOT been EXHAUSTIVELY tested -- there MAY be bugs.
 
 // A generic fixed-size array that can be indexed into with an enum.
 //
@@ -8,7 +6,7 @@
 //      bird_counts: Enumerated_Array(Bird, int);
 //
 // The size of the array will be set such that it can fit all possible unique
-// enum values.
+// values of the provided enum.
 //
 // You can index into an Enumerated_Array using its enum, but only if you fully
 // qualify it (due to language restrictions):
@@ -17,25 +15,26 @@
 //      bird_counts[Bird.HAWK] += 1;
 //
 // For very verbose enum names, though, this can become unwieldy. To help with
-// this, Enumerated_Array's backing array is contained inside of a union, along
-// with a using'd anonymous struct containing members matching each enum name --
-// you can use these members to access the array element directly:
+// this, Enumerated_Array's backing array is #placed "onto" a using'd anonymous
+// struct containing members matching each enum name -- allowing you to access
+// the array elements more concisely:
 //
 //      number_of_falcons := bird_counts.FALCON;
 //      bird_counts.HAWK += 1;
 //
 // Unlike other implementations, Enumerated_Array correctly handles enums with
-// more than one name corresponding to a single value, and also "sparse" enums
-// with some values omitted between other values.
+// more than one name corresponding to a single value, as well as enums that
+// have "holes" between named values, and enums whose lowest named value is
+// nonzero.
 //
-// If more than one enum name corresponds to a single value, then the values
-// struct within the union will contain a nested union containing all names for
-// that value -- so you can access that element of the array "by member name"
-// using any of the possible names that map to that value.
+// If more than one enum name corresponds to a single value, then the (using'd)
+// values struct will contain a nested union containing all names for that value
+// -- so you can access that element of the array "by member name" using any of
+// the possible names that map to that value.
 
 
-// Example -- set false to true below to try it:
-#if false #run {
+// Example/Tests -- set false to true below and compile this file to run
+#if false #run { (#import "Compiler").set_build_options_dc(.{do_output=false});
     Thing :: enum {
         ZERO;
         FIRST       :: ZERO;
@@ -94,6 +93,9 @@
     assert(stuff.ZERO    == 108);
     assert(stuff.data[0] == 108);
 
+    for stuff log("% %", it_index, it);
+    log("---");
+
     // Assignment using a values literal
     other_stuff := Enumerated_Array(Thing, float).{
         FIRST  =.1,
@@ -101,23 +103,65 @@
         SEVEN  =.7,
         SPECIAL=.420,
     };
+    for other_stuff log("% %", it_index, it);
+    log("---");
 
     // Assignment using an data literal
     more_stuff := Enumerated_Array(Thing, string).{data=.[
         "Hello", "Sailor", "This", "Is", "Just", "A", "Test", "Goodbye"
     ]};
+    for more_stuff log("% %", it_index, it);
+    log("---");
 
     // Offset test
     even_more_stuff := Enumerated_Array(enum { FOO :: 47; BAR :: 48; }, int).{
         FOO=100,
         BAR=10000
     };
-    for even_more_stuff {}
+    for even_more_stuff log("% %", it_index, it);
+    log("---");
 
     // Empty enum test
     Empty :: enum {}
     nothing: Enumerated_Array(Empty, int);
-    for nothing {}
+    for nothing assert(false, "This should not assert.");
+    log("---");
+
+    // Non-s64 enum test
+    Elf_Type :: enum u16 {
+        NONE   :: 0x00;
+        REL    :: 0x01;
+        EXEC   :: 0x02;
+        DYN    :: 0x03;
+        CORE   :: 0x04;
+        LOOS   :: 0xFE00;
+        HIOS   :: 0xFEFF;
+        LOPROC :: 0xFF00;
+        HIPROC :: 0xFFFF;
+    }
+    elves := Enumerated_Array(Elf_Type, string).{data=.[
+        "Hermey", "Buddy", "Legolas", "Drizzt", "Dobby", "Ernie", "Tyrande", "Tanis", "Puck"
+    ]};
+    for elves log("% %", it_index, it);
+    log("---");
+
+    // Just for fun
+    Currency :: enum { OLD_COINS; BUCKS; SIMOLEANS; }
+    Loot_Bag :: Enumerated_Array(Currency, int);
+    my_sack_of_loot := Loot_Bag.{
+        OLD_COINS =  69,
+        BUCKS     = 420,
+        SIMOLEANS = 108,
+    };
+    CURRENCY_TO_GOLD_EXCHANGE_RATES :: Enumerated_Array(Currency, float).{
+        OLD_COINS = 0.5 ,
+        BUCKS     = 1   ,
+        SIMOLEANS = 4.25
+    };
+    gold_value_of_my_sack_of_loot := 0;
+    for my_sack_of_loot
+        gold_value_of_my_sack_of_loot += xx (cast(float) it * CURRENCY_TO_GOLD_EXCHANGE_RATES[it_index]);
+    assert(gold_value_of_my_sack_of_loot == 913);
 }
 
 
@@ -130,7 +174,7 @@ Enumerated_Array :: struct(
     //
     // For very large, very sparse ENUMs, you might want to set this to false
     // instead.
-    // 
+    //
     // If ENUM is zero-indexed and contiguous, then this setting is ignored, as
     // no lookup table is required, and ENUM itself can be used to directly
     // index into the array.
@@ -148,12 +192,10 @@ Enumerated_Array :: struct(
     //      data:  Fixed-size array of T, sized to fit all unique ENUM values.
     //   (values:) Anonymous struct containing T members and/or unions
     //             containing only T members -- one member corresponding with
-    //             each ENUM name. This struct is unioned with data, providing
+    //             each ENUM name. data is #placed "onto" this struct, providing
     //             an alternate way of accessing the same T values. The struct
     //             is also using'd, so you don't need to qualify access to it
-    //             with "values." -- though, this is useful for declaring
-    //             literals of this Enumerated_Array, when you only want to set
-    //             specific values (e.g. .{ FIRST=1, SEVENTH=7 }).
+    //             with "values."
 
     // Common array convention: "count"
     #if IS_CONTIGUOUS
@@ -247,6 +289,7 @@ Enumerated_Array :: struct(
         }
     }
 }
+
 for_expansion :: (
     array: *Enumerated_Array,
     body:  Code,     // No remove
@@ -256,7 +299,7 @@ for_expansion :: (
         #if array.IS_CONTIGUOUS && array.INDEX_OFFSET == 0 then // Direct index
             `it_index := cast(array.ENUM) index;
         else #if array.IS_CONTIGUOUS then                       // Offset index
-            `it_index := cast(array.ENUM) (index - array.INDEX_OFFSET);
+            `it_index := cast(array.ENUM) (index + array.INDEX_OFFSET);
         else                                                    // Lookup table
             `it_index := cast(array.ENUM) array.VALUE_MAPPINGS[index].value;
 
@@ -268,6 +311,7 @@ for_expansion :: (
         #insert(remove=#assert false "This for_expansion does not support remove.") body;
     }
 }
+
 operator *[] :: (
     using array: *Enumerated_Array,
     index:       array.ENUM

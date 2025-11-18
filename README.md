@@ -1,28 +1,39 @@
 Enumerated Array module
 =======================
 
-This is a generic fixed-size array that can be indexed into with an `enum`.
+A generic fixed-size array that can be indexed into with an `enum`.
 
 ```jai
 Bird :: enum { DOVE; FALCON; HAWK; }
 bird_counts: Enumerated_Array(Bird, int);
 ```
 
-The size of the array will be set such that it can fit all possible unique `enum` values.
+The size of the array will be set such that it can fit all possible unique
+values of the provided `enum`.
 
-You can index into an `Enumerated_Array` using its `enum`, but only if you fully qualify it (due to language restrictions):
+You can index into an `Enumerated_Array` using its `enum`, but only if you fully
+qualify it (due to language restrictions):
 ```jai
 number_of_falcons := bird_counts[Bird.FALCON];
 bird_counts[Bird.HAWK] += 1;
 ```
-For very verbose enum names, though, this can become unwieldy. To help with this, `Enumerated_Array`'s backing array is `#place`d into a `using`'d anonymous `struct` containing members matching each `enum` name -- you can use these members to access the array element directly:
+For very verbose `enum` names, though, this can become unwieldy. To help with
+this, `Enumerated_Array`'s backing array is `#place`d "onto" a `using`'d anonymous
+`struct` containing members matching each `enum` name -- allowing you to access
+the array elements more concisely:
 ```jai
 number_of_falcons := bird_counts.FALCON;
 bird_counts.HAWK += 1;
 ```
-Unlike other implementations, `Enumerated_Array` correctly handles `enum`s with more than one name corresponding to a single value, and also “sparse” `enum`s with some values omitted between other values.
+Unlike other implementations, `Enumerated_Array` correctly handles `enum`s with
+more than one name corresponding to a single value, as well as `enum`s that
+have "holes" between named values, and `enum`s whose lowest named value is
+nonzero.
 
-If more than one `enum` name corresponds to a single value, then the `values` `struct` will contain a nested `union` containing all names for that value -- so you can access that element of the array “by member name” using any of the possible `enum` names that map to that value.
+If more than one `enum` name corresponds to a single value, then the (`using`'d)
+values `struct` will contain a nested `union` containing all names for that value
+-- so you can access that element of the array "by member name" using any of
+the possible names that map to that value.
 
 For example, given the following `enum`:
 ```jai
