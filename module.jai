@@ -221,8 +221,9 @@ Enumerated_Array :: struct(
     }}
 
     // Common array convention: "data"
-    #if count then #place values;
-    data: [count] T;
+    #if count
+        then #overlay (values) data: [count] T;
+        else                   data: [count] T;
 
 
     // Internal interface:
@@ -248,7 +249,7 @@ Enumerated_Array :: struct(
     //                   spare ENUMs. Used at runtime.
 
     IS_CONTIGUOUS :: #run -> bool {
-        values := type_info(ENUM).values;
+        using _ := type_info(ENUM);
         for 0..values.count-2 if values[it+1] != values[it]+1 then return false;
         return true;
     }
